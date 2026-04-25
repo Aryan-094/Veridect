@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veridect — Fake News & Propaganda Detector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <span class="logo-dot blue"></span>
+        <span class="logo-dot red"></span>
+      </div>
+      <span class="logo-text">Veridect</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Detection</div>
+      <a href="#" class="nav-item active" data-view="dashboard">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="2" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="2" y="9" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="5" height="5" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item" data-view="analyzer">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.3"/><line x1="11" y1="11" x2="15" y2="15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+        Article analyser
+      </a>
+      <a href="#" class="nav-item" data-view="history">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><polyline points="8,5 8,8.5 10.5,10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Scan history
+        <span class="nav-badge" id="history-count">5</span>
+      </a>
+      <a href="#" class="nav-item" data-view="tactics">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L9.8 6.5H14L10.6 9.2L11.8 14L8 11.2L4.2 14L5.4 9.2L2 6.5H6.2Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        Propaganda guide
+      </a>
+
+      <div class="nav-section-label">OSINT</div>
+      <a href="#" class="nav-item" data-view="domain">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 2C8 2 6 5 6 8C6 11 8 14 8 14" stroke="currentColor" stroke-width="1.3"/><path d="M2 8H14" stroke="currentColor" stroke-width="1.3"/></svg>
+        Domain lookup
+      </a>
+      <a href="#" class="nav-item" data-view="about">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><line x1="8" y1="5" x2="8" y2="8.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="8" cy="10.5" r=".8" fill="currentColor"/></svg>
+        About & tech stack
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-label">Recent scans</div>
+      <div id="recent-scans-list"></div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-area">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="2" y1="4" x2="14" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="2" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <form class="topbar-form" id="topbar-form" onsubmit="handleTopbarSubmit(event)">
+        <div class="topbar-input-wrap">
+          <svg class="topbar-search-icon" width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><line x1="11" y1="11" x2="15" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input type="text" id="topbar-input" placeholder="Paste article URL or text to analyse..." autocomplete="off">
+          <div class="topbar-hint">Press Enter</div>
+        </div>
+        <button type="submit" class="topbar-btn" id="topbar-btn">
+          <span class="btn-text">Analyse</span>
+          <span class="btn-loader" style="display:none">
+            <svg class="spin" width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2" stroke-dasharray="20 18"/></svg>
+          </span>
+        </button>
+      </form>
+    </header>
+
+    <!-- Views -->
+    <div class="view-container">
+
+      <!-- Dashboard View -->
+      <div class="view" id="view-dashboard">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">Analysis dashboard</h1>
+            <p class="view-sub" id="last-scan-label">No scans yet — paste a URL or article text above</p>
+          </div>
+        </div>
+
+        <div class="metrics-row" id="metrics-row">
+          <div class="metric-card" id="mc-credibility">
+            <div class="metric-label">Credibility score</div>
+            <div class="metric-value dim">—</div>
+            <div class="metric-sub">Run a scan to see results</div>
+          </div>
+          <div class="metric-card" id="mc-propaganda">
+            <div class="metric-label">Propaganda signals</div>
+            <div class="metric-value dim">—</div>
+            <div class="metric-sub">Tactics detected</div>
+          </div>
+          <div class="metric-card" id="mc-domain">
+            <div class="metric-label">Domain age</div>
+            <div class="metric-value dim">—</div>
+            <div class="metric-sub">Source registration</div>
+          </div>
+          <div class="metric-card" id="mc-risk">
+            <div class="metric-label">Risk level</div>
+            <div class="metric-value dim">—</div>
+            <div class="metric-sub">Overall classification</div>
+          </div>
+        </div>
+
+        <div class="results-grid" id="results-grid" style="display:none">
+          <div class="panel" id="panel-breakdown">
+            <div class="panel-head">
+              <span class="panel-title">Risk breakdown</span>
+              <span class="panel-tag" id="risk-tag">—</span>
+            </div>
+            <div class="big-score-wrap">
+              <div class="big-score" id="big-score">—</div>
+              <div class="big-score-label">fake news probability</div>
+            </div>
+            <div class="score-bar-wrap">
+              <div class="score-bar-track">
+                <div class="score-bar-fill" id="score-bar-fill" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="signal-list" id="signal-list"></div>
+          </div>
+
+          <div class="right-panels">
+            <div class="panel" id="panel-tactics">
+              <div class="panel-head">
+                <span class="panel-title">Propaganda tactics detected</span>
+              </div>
+              <div class="tactics-grid" id="tactics-grid">
+                <div class="no-result-hint">No tactics detected in this content</div>
+              </div>
+            </div>
+
+            <div class="panel" id="panel-osint">
+              <div class="panel-head">
+                <span class="panel-title">OSINT source analysis</span>
+              </div>
+              <div class="osint-table" id="osint-table"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="18" cy="18" r="13" stroke="currentColor" stroke-width="1.5" opacity="0.3"/><line x1="28" y1="28" x2="37" y2="37" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.3"/><line x1="13" y1="18" x2="23" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/><line x1="18" y1="13" x2="18" y2="23" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/></svg>
+          </div>
+          <div class="empty-title">Ready to analyse</div>
+          <div class="empty-desc">Paste an article URL, headline, or any text into the search bar above and press Enter to run a full fake news and propaganda analysis.</div>
+          <div class="sample-inputs">
+            <div class="sample-label">Try a sample:</div>
+            <button class="sample-btn" onclick="runSample('https://healthtruth24.net/vaccines-hidden-side-effects')">healthtruth24.net article</button>
+            <button class="sample-btn" onclick="runSample('https://bbc.com/news/world-climate-report-2024')">bbc.com article</button>
+            <button class="sample-btn" onclick="runSample('SHOCKING: Government HIDING the truth about 5G towers! Experts EXPOSE the deadly radiation cover-up that mainstream media REFUSES to report. You MUST share this before it gets banned!')">Sensational text snippet</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- History View -->
+      <div class="view" id="view-history" style="display:none">
+        <div class="view-header">
+          <h1 class="view-title">Scan history</h1>
+          <p class="view-sub">All articles and text analysed in this session</p>
+        </div>
+        <div class="history-list" id="history-list"></div>
+      </div>
+
+      <!-- Tactics Guide View -->
+      <div class="view" id="view-tactics" style="display:none">
+        <div class="view-header">
+          <h1 class="view-title">Propaganda tactics guide</h1>
+          <p class="view-sub">Common techniques used in disinformation campaigns</p>
+        </div>
+        <div class="tactics-guide" id="tactics-guide"></div>
+      </div>
+
+      <!-- Domain View -->
+      <div class="view" id="view-domain" style="display:none">
+        <div class="view-header">
+          <h1 class="view-title">Domain lookup</h1>
+          <p class="view-sub">Analyse source credibility by domain name</p>
+        </div>
+        <form class="domain-form" onsubmit="handleDomainLookup(event)">
+          <input type="text" class="domain-input" id="domain-input" placeholder="e.g. bbc.com or globalnewstoday.io">
+          <button type="submit" class="domain-btn">Look up</button>
+        </form>
+        <div id="domain-result"></div>
+      </div>
+
+      <!-- About View -->
+      <div class="view" id="view-about" style="display:none">
+        <div class="view-header">
+          <h1 class="view-title">About Veridect</h1>
+          <p class="view-sub">Technology stack & methodology</p>
+        </div>
+        <div class="about-grid">
+          <div class="about-card">
+            <div class="about-card-icon blue">NLP</div>
+            <div class="about-card-title">Natural language processing</div>
+            <div class="about-card-body">Sentence-level analysis using regex-based pattern matching for propaganda tactics, sentiment bias detection via keyword scoring, and linguistic manipulation heuristics. Production version would use fine-tuned BERT/RoBERTa.</div>
+            <div class="tech-tags"><span>spaCy</span><span>NLTK</span><span>HuggingFace</span><span>BERT</span></div>
+          </div>
+          <div class="about-card">
+            <div class="about-card-icon red">OSINT</div>
+            <div class="about-card-title">Open source intelligence</div>
+            <div class="about-card-body">Domain credibility scoring using a curated whitelist of known reliable sources, detection of suspicious naming patterns, TLD analysis, domain age simulation, and registrar country risk profiling.</div>
+            <div class="tech-tags"><span>Whois</span><span>GDELT</span><span>NewsAPI</span><span>Shodan</span></div>
+          </div>
+          <div class="about-card">
+            <div class="about-card-icon yellow">ML</div>
+            <div class="about-card-title">Scoring & fusion</div>
+            <div class="about-card-body">Weighted multi-signal fusion model combining NLP signals (40%), source credibility (25%), and cross-source agreement (10%). Final risk classification into 4 tiers. Explainability via per-signal breakdown.</div>
+            <div class="tech-tags"><span>XGBoost</span><span>SHAP</span><span>scikit-learn</span><span>LIME</span></div>
+          </div>
+          <div class="about-card">
+            <div class="about-card-icon green">API</div>
+            <div class="about-card-title">Backend & deployment</div>
+            <div class="about-card-body">Lightweight Flask REST API with JSON responses. All analysis runs server-side. Designed for Docker containerisation. Frontend is pure HTML/CSS/JS — no framework dependencies.</div>
+            <div class="tech-tags"><span>Flask</span><span>Python</span><span>Docker</span><span>REST API</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /view-container -->
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
